@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>{{ profile_user.username }}’s Profile</h1>
+  <p>Role: {{ profile_user.role }}</p>
+  <p>Email: {{ profile_user.email }}</p>
+
+  <h2>Status Updates</h2>
+  <ul>
+    {% for s in statuses %}
+      <li>{{ s.created_at|date:"M d, Y H:i" }} — {{ s.content }}</li>
+    {% empty %}
+      <li>No updates yet.</li>
+    {% endfor %}
+  </ul>
+
+  <h2>{{ item_label }}</h2>
+  <ul>
+    {% for obj in items %}
+      <li>{{ obj.title }}</li>
+    {% empty %}
+      <li>None.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

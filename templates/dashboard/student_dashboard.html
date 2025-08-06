@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Student Dashboard</h1>
+<h2>Your Status Updates</h2>
+<form method="post" action="{% url 'post_status' %}">
+  {% csrf_token %}
+  {{ status_form.as_p }}
+  <button type="submit">Post</button>
+</form>
+
+<ul>
+  {% for update in user.status_updates.all|slice:":5" %}
+    <li>{{ update.created_at|date:"M d, Y H:i" }} — {{ update.content }}</li>
+  {% empty %}
+    <li>No status updates yet.</li>
+  {% endfor %}
+</ul>
+
+  <h2>Enrolled Courses</h2>
+  <ul>
+    {% for enrollment in enrollments %}
+      <li>{{ enrollment.course.title }}</li>
+          <a href="{% url 'give_feedback' enrollment.course.pk %}">Leave Feedback</a>
+    {% empty %}
+      <li>You’re not enrolled in any courses yet.</li>
+    {% endfor %}
+  </ul>
+
+  <h2>Available Courses</h2>
+  <ul>
+    {% for course in available_courses %}
+      <li>
+        {{ course.title }} by {{ course.instructor.username }}
+        <a href="{% url 'enroll' course.pk %}">Enroll</a>
+      </li>
+    {% empty %}
+      <li>No new courses available.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

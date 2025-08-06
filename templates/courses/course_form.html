@@ -1,0 +1,8 @@
+{% extends "base.html" %} {% block content %}
+<h1>Create Course</h1>
+<form method="post">
+  {% csrf_token %} {{ form.as_p }}
+  <button type="submit">Save Course</button>
+</form>
+<p><a href="{% url 'home' %}">&larr; Back to courses</a></p>
+{% endblock %}

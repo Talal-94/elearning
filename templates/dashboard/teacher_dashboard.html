@@ -1,0 +1,30 @@
+{% extends "base.html" %} {% block content %}
+<h1>Teacher Dashboard</h1>
+<p>
+  <a href="{% url 'course_create' %}">+ Create New Course</a> |
+  <a href="{% url 'user_search' %}">Find/Block Users</a>
+</p>
+<h2>Your Status Updates</h2>
+<form method="post" action="{% url 'post_status' %}">
+  {% csrf_token %}
+  {{ StatusUpdateForm.as_p }}
+  <button type="submit">Post</button>
+</form>
+
+<ul>
+  {% for update in user.status_updates.all|slice:":5" %}
+    <li>{{ update.created_at|date:"M d, Y H:i" }} — {{ update.content }}</li>
+  {% empty %}
+    <li>No status updates yet.</li>
+  {% endfor %}
+</ul>
+
+<h2>Your Courses</h2>
+<ul>
+  {% for course in courses %}
+  <li>{{ course.title }} ({{ course.enrollments.count }} students)</li>
+  {% empty %}
+  <li>You haven’t created any courses yet.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %} {% block content %}
+<h1>Find Users</h1>
+<form method="get">
+  <input type="text" name="q" placeholder="Username or email" value="{{ q }}" />
+  <button type="submit">Search</button>
+</form>
+
+{% if results %}
+<ul>
+  {% for row in results %}
+<li>
+  <a href="{% url 'user_profile' row.user.username %}">
+    {{ row.user.username }}
+  </a>
+  ({{ row.user.email }}) — role: {{ row.user.role }}
+  {% if row.is_blocked %}
+    <a href="{% url 'user_unblock' row.user.pk %}">Unblock</a>
+  {% else %}
+    <a href="{% url 'user_block' row.user.pk %}">Block</a>
+  {% endif %}
+</li>
+  {% endfor %}
+</ul>
+{% elif q %}
+<p>No users match “{{ q }}.”</p>
+{% endif %} {% endblock %}
