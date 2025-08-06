@@ -25,7 +25,15 @@ SECRET_KEY = 'django-insecure-(jcw!fbq#fsw4e@ktqmkdam-+ii23&5pj_5gkni%!agc+myyxz
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# elearning/settings.py
+
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    '16.171.57.22',   # your EC2 public IP
+    # 'your-domain.com',  # if you have a DNS name
+]
+
 
 
 # Application definition
