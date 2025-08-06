@@ -27,12 +27,8 @@ DEBUG = True
 
 # elearning/settings.py
 
-ALLOWED_HOSTS = [
-    '127.0.0.1',
-    'localhost',
-    '16.171.57.22',   # your EC2 public IP
-    # 'your-domain.com',  # if you have a DNS name
-]
+ALLOWED_HOSTS = ['*']
+
 
 
 
