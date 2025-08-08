@@ -22,12 +22,14 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("accounts.urls")),
 
-    # Dashboard is the home page
+    # Home = role-aware dashboard
     path("", dashboard_view, name="home"),
 
-    # Pull in all course‑related routes at the root level:
+    # App routes
     path("", include("courses.urls")),
+    path("", include("chat.urls")),
 
+    # API
     path("api/", include("api.urls")),
     path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
 ]

@@ -1,26 +1,35 @@
-{% extends "base.html" %} {% block content %}
-<h1>Find Users</h1>
-<form method="get">
-  <input type="text" name="q" placeholder="Username or email" value="{{ q }}" />
-  <button type="submit">Search</button>
-</form>
+{% extends "base.html" %}
+{% block content %}
+  <h1 class="mb-3">Find Users</h1>
 
-{% if results %}
-<ul>
-  {% for row in results %}
-<li>
-  <a href="{% url 'user_profile' row.user.username %}">
-    {{ row.user.username }}
-  </a>
-  ({{ row.user.email }}) — role: {{ row.user.role }}
-  {% if row.is_blocked %}
-    <a href="{% url 'user_unblock' row.user.pk %}">Unblock</a>
-  {% else %}
-    <a href="{% url 'user_block' row.user.pk %}">Block</a>
+  <form method="get" class="row row-cols-lg-auto g-3 align-items-center mb-3">
+    <div class="col-12">
+      <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Username or email">
+    </div>
+    <div class="col-12">
+      <button class="btn btn-primary">Search</button>
+    </div>
+  </form>
+
+  {% if results %}
+    <ul class="list-group">
+      {% for row in results %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <a href="{% url 'user_profile' row.user.username %}">{{ row.user.username }}</a>
+            <small class="text-muted">({{ row.user.email }}) — role: {{ row.user.role }}</small>
+          </div>
+          <div>
+            {% if row.is_blocked %}
+              <a class="btn btn-sm btn-outline-danger" href="{% url 'user_unblock' row.user.pk %}">Unblock</a>
+            {% else %}
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'user_block' row.user.pk %}">Block</a>
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% elif q %}
+    <div class="alert alert-info">No users match “{{ q }}”.</div>
   {% endif %}
-</li>
-  {% endfor %}
-</ul>
-{% elif q %}
-<p>No users match “{{ q }}.”</p>
-{% endif %} {% endblock %}
+{% endblock %}

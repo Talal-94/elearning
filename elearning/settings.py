@@ -40,19 +40,23 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-        # Django defaults...
     'django.contrib.staticfiles',
 
-    # Third‑party
     'rest_framework',
     'channels',
 
-    # Your apps
     'accounts',
     'courses',
     'chat',
     'api',
+
+    "crispy_forms", 
+    "crispy_bootstrap5"
 ]
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

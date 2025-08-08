@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <div>
+      <h1 class="mb-0">{{ course.title }}</h1>
+      <small class="text-muted">by {{ course.instructor.username }}</small>
+    </div>
+    <div>
+      <a class="btn btn-outline-secondary btn-sm" href="{% url 'chat_room' course.id %}">Open course chat</a>
+    </div>
+  </div>
+
+  <p class="mb-4">{{ course.description }}</p>
+
+  {% if user.role == 'student' and not enrolled %}
+    <p><a class="btn btn-primary" href="{% url 'enroll' course.id %}">Enroll in this course</a></p>
+  {% endif %}
+
+  {% if user.role == 'student' and enrolled %}
+    <p><a class="btn btn-outline-primary btn-sm" href="{% url 'give_feedback' course.id %}">Leave Feedback</a></p>
+  {% endif %}
+
+  <div class="row g-4">
+    <div class="col-12 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header">Materials</div>
+        <ul class="list-group list-group-flush">
+          {% for m in course.materials.all %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <a href="{{ m.upload.url }}">{{ m.title }}</a>
+              <small class="text-muted">{{ m.uploaded_at|date:"M d, Y H:i" }}</small>
+            </li>
+          {% empty %}
+            <li class="list-group-item">No materials yet.</li>
+          {% endfor %}
+        </ul>
+        {% if user == course.instructor %}
+          <div class="card-body">
+            <a class="btn btn-sm btn-success" href="{% url 'material_upload' course.id %}">Upload material</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header">Feedback</div>
+        <ul class="list-group list-group-flush">
+          {% for f in course.feedbacks.all %}
+            <li class="list-group-item">
+              <strong>{{ f.student.username }}</strong>
+              <small class="text-muted"> — {{ f.created_at|date:"M d, Y H:i" }}</small>
+              <div>{{ f.content }}</div>
+            </li>
+          {% empty %}
+            <li class="list-group-item">No feedback yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+{% endblock %}

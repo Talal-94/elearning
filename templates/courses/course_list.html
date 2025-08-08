@@ -1,20 +1,21 @@
-{% extends "base.html" %} {% block content %}
-<h1>All Courses</h1>
-
-{% if user.role == 'teacher' %}
-<a href="{% url 'course_create' %}">+ Create New Course</a>
-{% endif %}
-
-<ul>
-  {% for course in courses %}
-  <li>
-    <strong>{{ course.title }}</strong> by {{ course.instructor.username }} {%
-    {% if user.role == 'student' %}
-    <a href="{% url 'enroll' course.pk %}"> - Enroll</a>
-    {% endif %}
-  </li>
-  {% empty %}
-  <li>No courses yet.</li>
-  {% endfor %}
-</ul>
+{% extends "base.html" %}
+{% block content %}
+  <h1 class="mb-3">All Courses</h1>
+  <div class="row g-3">
+    {% for course in courses %}
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">
+              <a href="{% url 'course_detail' course.id %}">{{ course.title }}</a>
+            </h5>
+            <p class="card-text text-muted mb-3">by {{ course.instructor.username }}</p>
+            <a href="{% url 'course_detail' course.id %}" class="btn btn-primary btn-sm">View</a>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p>No courses yet.</p>
+    {% endfor %}
+  </div>
 {% endblock %}

@@ -1,40 +1,63 @@
 {% extends "base.html" %}
+{% load crispy_forms_tags %}
 {% block content %}
-  <h1>Student Dashboard</h1>
-<h2>Your Status Updates</h2>
-<form method="post" action="{% url 'post_status' %}">
-  {% csrf_token %}
-  {{ status_form.as_p }}
-  <button type="submit">Post</button>
-</form>
+  <h1 class="mb-4">Student Dashboard</h1>
 
-<ul>
-  {% for update in user.status_updates.all|slice:":5" %}
-    <li>{{ update.created_at|date:"M d, Y H:i" }} — {{ update.content }}</li>
-  {% empty %}
-    <li>No status updates yet.</li>
-  {% endfor %}
-</ul>
+  <div class="row g-4">
+    <div class="col-12 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header">Your Status Updates</div>
+        <div class="card-body">
+          <form method="post" action="{% url 'post_status' %}" class="mb-3">
+            {% csrf_token %}
+            {{ status_form|crispy }}
+            <button class="btn btn-primary">Post</button>
+          </form>
+          <ul class="list-group list-group-flush">
+            {% for update in user.status_updates.all|slice:":5" %}
+              <li class="list-group-item">
+                <small class="text-muted">{{ update.created_at|date:"M d, Y H:i" }}</small><br>
+                {{ update.content }}
+              </li>
+            {% empty %}
+              <li class="list-group-item">No status updates yet.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
 
-  <h2>Enrolled Courses</h2>
-  <ul>
-    {% for enrollment in enrollments %}
-      <li>{{ enrollment.course.title }}</li>
-          <a href="{% url 'give_feedback' enrollment.course.pk %}">Leave Feedback</a>
-    {% empty %}
-      <li>You’re not enrolled in any courses yet.</li>
-    {% endfor %}
-  </ul>
+    <div class="col-12 col-lg-6">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header">Enrolled Courses</div>
+        <ul class="list-group list-group-flush">
+          {% for enrollment in enrollments %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <a href="{% url 'course_detail' enrollment.course.id %}">{{ enrollment.course.title }}</a>
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'give_feedback' enrollment.course.id %}">Leave Feedback</a>
+            </li>
+          {% empty %}
+            <li class="list-group-item">You’re not enrolled in any courses yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
 
-  <h2>Available Courses</h2>
-  <ul>
-    {% for course in available_courses %}
-      <li>
-        {{ course.title }} by {{ course.instructor.username }}
-        <a href="{% url 'enroll' course.pk %}">Enroll</a>
-      </li>
-    {% empty %}
-      <li>No new courses available.</li>
-    {% endfor %}
-  </ul>
+      <div class="card shadow-sm">
+        <div class="card-header">Available Courses</div>
+        <ul class="list-group list-group-flush">
+          {% for course in available_courses %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <a href="{% url 'course_detail' course.id %}">{{ course.title }}</a>
+                <small class="text-muted">by {{ course.instructor.username }}</small>
+              </div>
+              <a class="btn btn-sm btn-primary" href="{% url 'enroll' course.id %}">Enroll</a>
+            </li>
+          {% empty %}
+            <li class="list-group-item">No new courses available.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
 {% endblock %}

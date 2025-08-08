@@ -1,30 +1,55 @@
-{% extends "base.html" %} {% block content %}
-<h1>Teacher Dashboard</h1>
-<p>
-  <a href="{% url 'course_create' %}">+ Create New Course</a> |
-  <a href="{% url 'user_search' %}">Find/Block Users</a>
-</p>
-<h2>Your Status Updates</h2>
-<form method="post" action="{% url 'post_status' %}">
-  {% csrf_token %}
-  {{ StatusUpdateForm.as_p }}
-  <button type="submit">Post</button>
-</form>
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+  <h1 class="mb-4">Teacher Dashboard</h1>
 
-<ul>
-  {% for update in user.status_updates.all|slice:":5" %}
-    <li>{{ update.created_at|date:"M d, Y H:i" }} — {{ update.content }}</li>
-  {% empty %}
-    <li>No status updates yet.</li>
-  {% endfor %}
-</ul>
+  <div class="row g-4">
+    <div class="col-12 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header">Your Status Updates</div>
+        <div class="card-body">
+          <p>
+            <a class="btn btn-sm btn-success" href="{% url 'course_create' %}">+ Create New Course</a>
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'user_search' %}">Find/Block Users</a>
+          </p>
 
-<h2>Your Courses</h2>
-<ul>
-  {% for course in courses %}
-  <li>{{ course.title }} ({{ course.enrollments.count }} students)</li>
-  {% empty %}
-  <li>You haven’t created any courses yet.</li>
-  {% endfor %}
-</ul>
+          <form method="post" action="{% url 'post_status' %}" class="mb-3">
+            {% csrf_token %}
+            {{ status_form|crispy }}
+            <button class="btn btn-primary">Post</button>
+          </form>
+
+          <ul class="list-group list-group-flush">
+            {% for update in user.status_updates.all|slice:":5" %}
+              <li class="list-group-item">
+                <small class="text-muted">{{ update.created_at|date:"M d, Y H:i" }}</small><br>
+                {{ update.content }}
+              </li>
+            {% empty %}
+              <li class="list-group-item">No status updates yet.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header">Your Courses</div>
+        <ul class="list-group list-group-flush">
+          {% for course in courses %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <a href="{% url 'course_detail' course.id %}">{{ course.title }}</a>
+              <span>
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'chat_room' course.id %}">Chat</a>
+                <span class="badge text-bg-secondary">{{ course.enrollments.count }} students</span>
+              </span>
+            </li>
+          {% empty %}
+            <li class="list-group-item">You haven’t created any courses yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
 {% endblock %}
