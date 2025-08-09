@@ -1,63 +1,62 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
+{% block title %}Dashboard · eLearning{% endblock %}
 {% block content %}
-  <h1 class="mb-4">Student Dashboard</h1>
+<h1 class="h3 mb-3">Student Dashboard</h1>
 
-  <div class="row g-4">
-    <div class="col-12 col-lg-6">
-      <div class="card shadow-sm">
-        <div class="card-header">Your Status Updates</div>
-        <div class="card-body">
-          <form method="post" action="{% url 'post_status' %}" class="mb-3">
-            {% csrf_token %}
-            {{ status_form|crispy }}
-            <button class="btn btn-primary">Post</button>
-          </form>
-          <ul class="list-group list-group-flush">
-            {% for update in user.status_updates.all|slice:":5" %}
-              <li class="list-group-item">
-                <small class="text-muted">{{ update.created_at|date:"M d, Y H:i" }}</small><br>
-                {{ update.content }}
-              </li>
-            {% empty %}
-              <li class="list-group-item">No status updates yet.</li>
-            {% endfor %}
-          </ul>
-        </div>
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5">Post a Status</h2>
+        <form method="post" action="{% url 'post_status' %}">
+          {% csrf_token %}
+          {{ status_form|crispy }}
+          <button class="btn btn-outline-primary" type="submit">Post</button>
+        </form>
       </div>
     </div>
 
-    <div class="col-12 col-lg-6">
-      <div class="card shadow-sm mb-4">
-        <div class="card-header">Enrolled Courses</div>
+    <div class="card shadow-sm mt-4">
+      <div class="card-body">
+        <h2 class="h5">Enrolled Courses</h2>
         <ul class="list-group list-group-flush">
           {% for enrollment in enrollments %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
-              <a href="{% url 'course_detail' enrollment.course.id %}">{{ enrollment.course.title }}</a>
-              <a class="btn btn-sm btn-outline-secondary" href="{% url 'give_feedback' enrollment.course.id %}">Leave Feedback</a>
-            </li>
-          {% empty %}
-            <li class="list-group-item">You’re not enrolled in any courses yet.</li>
-          {% endfor %}
-        </ul>
-      </div>
-
-      <div class="card shadow-sm">
-        <div class="card-header">Available Courses</div>
-        <ul class="list-group list-group-flush">
-          {% for course in available_courses %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
               <div>
-                <a href="{% url 'course_detail' course.id %}">{{ course.title }}</a>
-                <small class="text-muted">by {{ course.instructor.username }}</small>
+                <a href="{% url 'course_detail' enrollment.course.id %}">{{ enrollment.course.title }}</a>
               </div>
-              <a class="btn btn-sm btn-primary" href="{% url 'enroll' course.id %}">Enroll</a>
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'chat_room' enrollment.course.id %}">Chat</a>
             </li>
           {% empty %}
-            <li class="list-group-item">No new courses available.</li>
+            <li class="list-group-item text-muted">You’re not enrolled in any courses yet.</li>
           {% endfor %}
         </ul>
       </div>
     </div>
   </div>
+
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5">Available Courses</h2>
+        <ul class="list-group list-group-flush">
+          {% for course in available_courses %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <a href="{% url 'course_detail' course.id %}">{{ course.title }}</a>
+                <div class="small text-muted">
+                  by <a href="{% url 'user_profile' course.instructor.username %}">{{ course.instructor.username }}</a>
+                </div>
+              </div>
+              <a class="btn btn-sm btn-success" href="{% url 'enroll' course.id %}">Enroll</a>
+            </li>
+          {% empty %}
+            <li class="list-group-item text-muted">No new courses available.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

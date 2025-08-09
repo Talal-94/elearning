@@ -1,62 +1,101 @@
 {% extends "base.html" %}
+{% block title %}{{ course.title }} · eLearning{% endblock %}
 {% block content %}
-  <div class="d-flex justify-content-between align-items-center mb-2">
-    <div>
-      <h1 class="mb-0">{{ course.title }}</h1>
-      <small class="text-muted">by {{ course.instructor.username }}</small>
-    </div>
-    <div>
-      <a class="btn btn-outline-secondary btn-sm" href="{% url 'chat_room' course.id %}">Open course chat</a>
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h1 class="h3 mb-1">{{ course.title }}</h1>
+    <div class="text-muted">
+      Instructor:
+      <a href="{% url 'user_profile' course.instructor.username %}">
+        {{ course.instructor.username }}
+      </a>
     </div>
   </div>
 
-  <p class="mb-4">{{ course.description }}</p>
+  <div class="d-flex gap-2">
+    {% if is_instructor %}
+      <a class="btn btn-primary" href="{% url 'material_upload' course.id %}">Upload Material</a>
+      {% if can_chat %}
+        <a class="btn btn-outline-secondary" href="{% url 'chat_room' course.id %}">Open Chat</a>
+      {% endif %}
+    {% else %}
+      {% if enrolled %}
+        <a class="btn btn-outline-secondary" href="{% url 'chat_room' course.id %}">Open Chat</a>
+        <a class="btn btn-outline-primary" href="{% url 'give_feedback' course.id %}">Leave Feedback</a>
+      {% elif user.is_authenticated and user.role == 'student' %}
+        <a class="btn btn-success" href="{% url 'enroll' course.id %}">Enroll</a>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
 
-  {% if user.role == 'student' and not enrolled %}
-    <p><a class="btn btn-primary" href="{% url 'enroll' course.id %}">Enroll in this course</a></p>
-  {% endif %}
-
-  {% if user.role == 'student' and enrolled %}
-    <p><a class="btn btn-outline-primary btn-sm" href="{% url 'give_feedback' course.id %}">Leave Feedback</a></p>
-  {% endif %}
-
-  <div class="row g-4">
-    <div class="col-12 col-lg-6">
-      <div class="card shadow-sm">
-        <div class="card-header">Materials</div>
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5">Materials</h2>
         <ul class="list-group list-group-flush">
           {% for m in course.materials.all %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
-              <a href="{{ m.upload.url }}">{{ m.title }}</a>
-              <small class="text-muted">{{ m.uploaded_at|date:"M d, Y H:i" }}</small>
+              {{ m.title }}
+              <a class="btn btn-sm btn-outline-primary" href="{{ m.upload.url }}">Download</a>
             </li>
           {% empty %}
-            <li class="list-group-item">No materials yet.</li>
-          {% endfor %}
-        </ul>
-        {% if user == course.instructor %}
-          <div class="card-body">
-            <a class="btn btn-sm btn-success" href="{% url 'material_upload' course.id %}">Upload material</a>
-          </div>
-        {% endif %}
-      </div>
-    </div>
-
-    <div class="col-12 col-lg-6">
-      <div class="card shadow-sm">
-        <div class="card-header">Feedback</div>
-        <ul class="list-group list-group-flush">
-          {% for f in course.feedbacks.all %}
-            <li class="list-group-item">
-              <strong>{{ f.student.username }}</strong>
-              <small class="text-muted"> — {{ f.created_at|date:"M d, Y H:i" }}</small>
-              <div>{{ f.content }}</div>
-            </li>
-          {% empty %}
-            <li class="list-group-item">No feedback yet.</li>
+            <li class="list-group-item text-muted">No materials yet.</li>
           {% endfor %}
         </ul>
       </div>
     </div>
   </div>
+
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5">Feedback</h2>
+        <ul class="list-group list-group-flush">
+          {% for fb in course.feedbacks.all %}
+            <li class="list-group-item">
+              <div class="small text-muted">
+                <a href="{% url 'user_profile' fb.student.username %}">{{ fb.student.username }}</a>
+                · {{ fb.created_at|date:"M d, Y H:i" }}
+              </div>
+              <div>{{ fb.content }}</div>
+            </li>
+          {% empty %}
+            <li class="list-group-item text-muted">No feedback yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if is_instructor %}
+  <div class="card shadow-sm mt-4">
+    <div class="card-body">
+      <h2 class="h5">Enrolled Students</h2>
+      {% if roster %}
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead><tr><th>Student</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+              {% for e in roster %}
+                <tr>
+                  <td><a href="{% url 'user_profile' e.student.username %}">{{ e.student.username }}</a></td>
+                  <td class="text-end">
+                    <a class="btn btn-sm btn-outline-danger"
+                       href="{% url 'unenroll_student' course.id e.student.id %}"
+                       onclick="return confirm('Unenroll this student?');">Unenroll</a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted mb-0">No students enrolled yet.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
 {% endblock %}

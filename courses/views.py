@@ -58,10 +58,8 @@ def post_status(request):
 # ---------- COURSES ----------
 @login_required
 def course_create(request):
-    # Teacher-only
     if not is_teacher(request.user):
         return HttpResponseForbidden()
-
     if request.method == "POST":
         form = CourseForm(request.POST)
         if form.is_valid():
@@ -90,17 +88,23 @@ def course_detail(request, course_id):
         pk=course_id
     )
     enrolled = Enrollment.objects.filter(course=course, student=request.user).exists()
+    is_instructor = is_teacher(request.user) and course.instructor_id == request.user.id
+    roster = []
+    if is_instructor:
+        roster = Enrollment.objects.filter(course=course).select_related("student").order_by("student__username")
+    can_chat = is_instructor or enrolled
     return render(request, "courses/course_detail.html", {
         "course": course,
         "enrolled": enrolled,
+        "is_instructor": is_instructor,
+        "roster": roster,
+        "can_chat": can_chat,
     })
 
 @login_required
 def enroll_in_course(request, course_id):
-    # Student-only
     if not is_student(request.user):
         return HttpResponseForbidden()
-
     course = get_object_or_404(Course, pk=course_id)
 
     if Block.objects.filter(teacher=course.instructor, blocked=request.user).exists():
@@ -119,11 +123,23 @@ def enroll_in_course(request, course_id):
     return redirect("course_detail", course_id=course.id)
 
 @login_required
-def material_upload(request, course_id):
-    # Teacher-only
+def unenroll_student(request, course_id, student_id):
+    """Teacher action: remove a student from their course."""
     if not is_teacher(request.user):
         return HttpResponseForbidden()
+    course = get_object_or_404(Course, pk=course_id, instructor=request.user)
+    qs = Enrollment.objects.filter(course=course, student_id=student_id)
+    if qs.exists():
+        qs.delete()
+        messages.success(request, "Student unenrolled from the course.")
+    else:
+        messages.info(request, "That student is not enrolled in this course.")
+    return redirect("course_detail", course_id=course.id)
 
+@login_required
+def material_upload(request, course_id):
+    if not is_teacher(request.user):
+        return HttpResponseForbidden()
     course = get_object_or_404(Course, pk=course_id, instructor=request.user)
     if request.method == "POST":
         form = MaterialForm(request.POST, request.FILES)
@@ -140,10 +156,8 @@ def material_upload(request, course_id):
 
 @login_required
 def give_feedback(request, course_id):
-    # Student-only
     if not is_student(request.user):
         return HttpResponseForbidden()
-
     course = get_object_or_404(Course, pk=course_id)
 
     if not Enrollment.objects.filter(course=course, student=request.user).exists():

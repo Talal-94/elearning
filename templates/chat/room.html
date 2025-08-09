@@ -1,36 +1,46 @@
 {% extends "base.html" %}
+{% block title %}Chat · eLearning{% endblock %}
 {% block content %}
-  <div class="card shadow-sm">
-    <div class="card-header">Chat — {{ course.title }}</div>
-    <div class="card-body">
-      <div id="chat-log" class="form-control mb-3" style="height:300px; overflow:auto;"></div>
-      <div class="input-group">
-        <input id="chat-message-input" type="text" class="form-control" placeholder="Type your message…">
-        <button id="chat-message-submit" class="btn btn-primary">Send</button>
-      </div>
+<h1 class="h4 mb-3">
+  Chat — <a href="{% url 'course_detail' course.id %}">{{ course.title }}</a>
+</h1>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div id="chat-log" class="border rounded p-2 mb-2" style="height: 260px; overflow:auto;"></div>
+    <div class="input-group">
+      <input id="chat-message-input" type="text" class="form-control" placeholder="Type a message…" />
+      <button id="chat-message-submit" class="btn btn-primary">Send</button>
     </div>
   </div>
+</div>
+{% endblock %}
 
-  <script>
-    const roomName = "{{ room_id }}";
-    const chatSocket = new WebSocket('ws://' + window.location.host + '/ws/chat/' + roomName + '/');
+{% block extra_js %}
+<script>
+  const roomName = "{{ course.id }}";
+  const wsScheme = (location.protocol === "https:") ? "wss" : "ws";
+  const chatSocket = new WebSocket(wsScheme + "://" + window.location.host + "/ws/chat/" + roomName + "/");
 
-    chatSocket.onopen  = () => console.log("[Chat] open");
-    chatSocket.onerror = e => console.error("[Chat] error", e);
-    chatSocket.onclose = () => console.warn("[Chat] closed");
-    chatSocket.onmessage = e => {
-      const data = JSON.parse(e.data);
-      const log = document.getElementById('chat-log');
-      log.innerHTML += `<div><strong>${data.user}:</strong> ${data.message}</div>`;
-      log.scrollTop = log.scrollHeight;
-    };
+  chatSocket.onopen = () => console.log("[Chat] open");
+  chatSocket.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    const log = document.getElementById("chat-log");
+    const p = document.createElement("p");
+    p.className = "mb-1";
+    p.textContent = data.user + ": " + data.message;
+    log.appendChild(p);
+    log.scrollTop = log.scrollHeight;
+  };
+  chatSocket.onerror = (e) => console.log("[Chat] error", e);
+  chatSocket.onclose = () => console.log("[Chat] closed");
 
-    document.getElementById('chat-message-submit').onclick = () => {
-      const input = document.getElementById('chat-message-input');
-      const msg = input.value.trim();
-      if (!msg) return;
-      chatSocket.send(JSON.stringify({ message: msg }));
-      input.value = '';
-    };
-  </script>
+  document.getElementById("chat-message-submit").onclick = () => {
+    const input = document.getElementById("chat-message-input");
+    if (input.value.trim().length === 0) return;
+    chatSocket.send(JSON.stringify({ "message": input.value }));
+    input.value = "";
+    input.focus();
+  };
+</script>
 {% endblock %}

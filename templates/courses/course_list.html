@@ -1,21 +1,20 @@
 {% extends "base.html" %}
+{% block title %}Courses · eLearning{% endblock %}
 {% block content %}
-  <h1 class="mb-3">All Courses</h1>
-  <div class="row g-3">
-    {% for course in courses %}
-      <div class="col-12 col-md-6 col-lg-4">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body">
-            <h5 class="card-title">
-              <a href="{% url 'course_detail' course.id %}">{{ course.title }}</a>
-            </h5>
-            <p class="card-text text-muted mb-3">by {{ course.instructor.username }}</p>
-            <a href="{% url 'course_detail' course.id %}" class="btn btn-primary btn-sm">View</a>
-          </div>
+<h1 class="h3 mb-3">All Courses</h1>
+<ul class="list-group">
+  {% for course in courses %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <div>
+        <a class="fw-semibold" href="{% url 'course_detail' course.id %}">{{ course.title }}</a>
+        <div class="small text-muted">
+          by <a href="{% url 'user_profile' course.instructor.username %}">{{ course.instructor.username }}</a>
         </div>
       </div>
-    {% empty %}
-      <p>No courses yet.</p>
-    {% endfor %}
-  </div>
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'course_detail' course.id %}">View</a>
+    </li>
+  {% empty %}
+    <li class="list-group-item text-muted">No courses yet.</li>
+  {% endfor %}
+</ul>
 {% endblock %}
