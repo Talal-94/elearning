@@ -1,24 +1,63 @@
 {% extends "base.html" %}
+{% block title %}{{ profile_user.username }} · Profile{% endblock %}
 {% block content %}
-  <h1>{{ profile_user.username }}’s Profile</h1>
-  <p>Role: {{ profile_user.role }}</p>
-  <p>Email: {{ profile_user.email }}</p>
+<div class="row g-4">
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h1 class="h5 mb-2">{{ profile_user.username }}</h1>
+        <div class="text-muted mb-2">Role: {{ profile_user.role|capfirst }}</div>
+        {% if profile_user.email %}
+          <div class="small">Email: {{ profile_user.email }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 
-  <h2>Status Updates</h2>
-  <ul>
-    {% for s in statuses %}
-      <li>{{ s.created_at|date:"M d, Y H:i" }} — {{ s.content }}</li>
-    {% empty %}
-      <li>No updates yet.</li>
-    {% endfor %}
-  </ul>
+  <div class="col-md-8">
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h2 class="h6">Recent status updates</h2>
+        <ul class="list-group list-group-flush">
+          {% for s in status_list %}
+            <li class="list-group-item">
+              <div class="small text-muted">{{ s.created_at|date:"M d, Y H:i" }}</div>
+              <div>{{ s.content }}</div>
+            </li>
+          {% empty %}
+            <li class="list-group-item text-muted">No status updates yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
 
-  <h2>{{ item_label }}</h2>
-  <ul>
-    {% for obj in items %}
-      <li>{{ obj.title }}</li>
-    {% empty %}
-      <li>None.</li>
-    {% endfor %}
-  </ul>
+    {% if taught_courses %}
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2 class="h6">Courses taught</h2>
+          <ul class="list-group list-group-flush">
+            {% for c in taught_courses %}
+              <li class="list-group-item"><a href="{% url 'course_detail' c.id %}">{{ c.title }}</a></li>
+            {% empty %}
+              <li class="list-group-item text-muted">No courses.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    {% elif enrolled_courses %}
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2 class="h6">Enrolled courses</h2>
+          <ul class="list-group list-group-flush">
+            {% for c in enrolled_courses %}
+              <li class="list-group-item"><a href="{% url 'course_detail' c.id %}">{{ c.title }}</a></li>
+            {% empty %}
+              <li class="list-group-item text-muted">No courses.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
 {% endblock %}
