@@ -39,10 +39,14 @@
             <td><a href="{% url 'user_profile' item.user.username %}">{{ item.user.username }}</a></td>
             <td>{{ item.user.email }}</td>
             <td class="text-end">
-              {% if item.is_blocked %}
-                <a class="btn btn-sm btn-outline-success" href="{% url 'user_unblock' item.user.id %}">Unblock</a>
+              {% if request.user.role == 'teacher' and item.user.role == 'student' %}
+                {% if item.is_blocked %}
+                  <a class="btn btn-sm btn-outline-success" href="{% url 'user_unblock' item.user.id %}">Unblock</a>
+                {% else %}
+                  <a class="btn btn-sm btn-outline-danger" href="{% url 'user_block' item.user.id %}">Block</a>
+                {% endif %}
               {% else %}
-                <a class="btn btn-sm btn-outline-danger" href="{% url 'user_block' item.user.id %}">Block</a>
+                <span class="text-muted">—</span>
               {% endif %}
             </td>
           </tr>

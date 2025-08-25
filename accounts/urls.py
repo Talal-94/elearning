@@ -15,10 +15,10 @@ urlpatterns = [
     path("logout/", logout_view, name="logout"),
 
     # Teacher user‑search & block/unblock
-    path("users/search/",               user_search_view,   name="user_search"),
-    path("users/<int:user_id>/block/",   block_user,       name="user_block"),
-    path("users/<int:user_id>/unblock/", unblock_user,     name="user_unblock"),
+    path("users/search/", user_search_view, name="user_search"),
+    path("users/<int:user_id>/block/", block_user, name="user_block"),
+    path("users/<int:user_id>/unblock/", unblock_user, name="user_unblock"),
 
     # Public user profiles
-    path("users/<str:username>/",       profile_view,     name="user_profile"),
+    path("users/<str:username>/", profile_view, name="user_profile"),
 ]

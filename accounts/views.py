@@ -82,9 +82,22 @@ def user_search_view(request):
         else:
             page_obj.object_list = list(page_obj.object_list)[: end_index - start_index]
 
-    blocked_ids = set(request.user.blocks_made.values_list("blocked_id", flat=True))
-    results = [{"user": u, "is_blocked": (u.pk in blocked_ids)} for u in page_obj.object_list]
+# Only consider blocked STUDENTS for the blocked_ids set
+    blocked_ids = set(
+        request.user.blocks_made
+        .filter(blocked__role=User.STUDENT)
+        .values_list("blocked_id", flat=True)
+    )
 
+    results = [
+        {
+            "user": u,
+            "is_blocked": (u.pk in blocked_ids),
+            "can_block": is_student(u),   # <- show/hide buttons in template
+        }
+        for u in page_obj.object_list
+    ]
+    
     context = {
         "q": q,
         "results": results,
@@ -99,8 +112,14 @@ def user_search_view(request):
 @login_required
 def block_user(request, user_id):
     if not is_teacher(request.user):
-        return HttpResponseForbidden()
+        return HttpResponseForbidden("Only teachers can block users.")
     target = get_object_or_404(User, pk=user_id)
+
+    if target.pk == request.user.pk:
+        return HttpResponseForbidden("You cannot block yourself.")
+    if not is_student(target):
+        return HttpResponseForbidden("Only students can be blocked.")
+
     Block.objects.get_or_create(teacher=request.user, blocked=target)
     return redirect(request.META.get("HTTP_REFERER") or "user_search")
 
@@ -108,16 +127,18 @@ def block_user(request, user_id):
 @login_required
 def unblock_user(request, user_id):
     if not is_teacher(request.user):
-        return HttpResponseForbidden()
+        return HttpResponseForbidden("Only teachers can unblock users.")
     target = get_object_or_404(User, pk=user_id)
+
+    if not is_student(target):
+        return HttpResponseForbidden("Only students can be unblocked.")
+
     Block.objects.filter(teacher=request.user, blocked=target).delete()
     return redirect(request.META.get("HTTP_REFERER") or "user_search")
 
 
-# -------- Public Profile --------
 @login_required
 def profile_view(request, username: str):
-    """Public user page visible to other users with status + courses summary."""
     profile_user = get_object_or_404(User, username=username)
 
     status_list = StatusUpdate.objects.filter(user=profile_user).order_by("-created_at")[:5]

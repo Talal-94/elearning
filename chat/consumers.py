@@ -1,9 +1,9 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from django.contrib.auth.models import AnonymousUser
-
+from asgiref.sync import sync_to_async
 from courses.models import Course, Enrollment
+from .permissions import can_access_course_chat
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -15,30 +15,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
     """
 
     async def connect(self):
-        user = self.scope.get("user", AnonymousUser())
-        # URL kwarg from routing: path("ws/chat/<room_name>/", ...)
-        self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
-
-        # validate course id
+        course_id = self.scope["url_route"]["kwargs"].get("course_id")
         try:
-            self.course_id = int(self.room_name)
-        except (TypeError, ValueError):
+            course = await sync_to_async(Course.objects.select_related("instructor").get)(pk=course_id)
+        except Course.DoesNotExist:
             await self.close()
             return
 
-        # fetch course
-        course = await self._get_course(self.course_id)
-        if not course or not user.is_authenticated:
-            await self.close()
-            return
+        user = self.scope.get("user")
 
-        allowed = await self._is_allowed(user.id, self.course_id, course.instructor_id)
+        allowed = await sync_to_async(can_access_course_chat)(user, course)
         if not allowed:
             await self.close()
             return
 
-        self.room_group_name = f"chat_{self.course_id}"
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        # Join group named by course id
+        self.group_name = f"course_{course.id}"
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
     async def disconnect(self, close_code):

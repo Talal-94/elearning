@@ -4,7 +4,6 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Prefetch
 from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
-
 from accounts.models import Block
 from .models import Course, Enrollment, Material, Feedback
 from .forms import CourseForm, MaterialForm, FeedbackForm, StatusUpdateForm
