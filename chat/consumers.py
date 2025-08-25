@@ -1,21 +1,22 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
-from channels.db import database_sync_to_async
 from asgiref.sync import sync_to_async
+from django.utils.encoding import force_str
 from courses.models import Course, Enrollment
 from .permissions import can_access_course_chat
 
-
 class ChatConsumer(AsyncWebsocketConsumer):
-    """
-    Per-course chat.
-    Authorization rule (defense in depth):
-      - allow if user is authenticated AND (course.instructor == user OR user is enrolled)
-      - otherwise reject the socket.
-    """
-
     async def connect(self):
-        course_id = self.scope["url_route"]["kwargs"].get("course_id")
+        kwargs = self.scope.get("url_route", {}).get("kwargs", {})
+        course_id = kwargs.get("course_id")
+        if course_id is None:
+            room_name = kwargs.get("room_name")
+            try:
+                course_id = int(room_name)
+            except (TypeError, ValueError):
+                await self.close()
+                return
+
         try:
             course = await sync_to_async(Course.objects.select_related("instructor").get)(pk=course_id)
         except Course.DoesNotExist:
@@ -23,58 +24,44 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         user = self.scope.get("user")
-
         allowed = await sync_to_async(can_access_course_chat)(user, course)
         if not allowed:
             await self.close()
             return
 
-        # Join group named by course id
-        self.group_name = f"course_{course.id}"
-        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        self.room_group_name = f"course_{course.id}"
+
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
     async def disconnect(self, close_code):
-        # leave room
         try:
             await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         except Exception:
             pass
 
     async def receive(self, text_data=None, bytes_data=None):
-        if not text_data:
-            return
-        try:
-            data = json.loads(text_data)
-        except json.JSONDecodeError:
-            return
+        msg = ""
 
-        message = (data.get("message") or "").strip()
-        if not message:
+        if text_data:
+            try:
+                data = json.loads(text_data)
+                msg = (data.get("message") or data.get("text") or "").strip()
+            except json.JSONDecodeError:
+                msg = text_data.strip()
+        elif bytes_data:
+            msg = force_str(bytes_data).strip()
+
+        if not msg:
             return
 
         user = self.scope.get("user")
         username = getattr(user, "username", "unknown")
 
-        # broadcast to room
         await self.channel_layer.group_send(
             self.room_group_name,
-            {"type": "chat.message", "message": message, "user": username},
+            {"type": "chat.message", "message": msg, "user": username},
         )
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps({"message": event["message"], "user": event["user"]}))
-
-    # ------- DB helpers -------
-    @database_sync_to_async
-    def _get_course(self, course_id: int):
-        try:
-            return Course.objects.only("id", "instructor_id").get(pk=course_id)
-        except Course.DoesNotExist:
-            return None
-
-    @database_sync_to_async
-    def _is_allowed(self, user_id: int, course_id: int, instructor_id: int) -> bool:
-        if user_id == instructor_id:
-            return True
-        return Enrollment.objects.filter(course_id=course_id, student_id=user_id).exists()
