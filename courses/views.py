@@ -8,6 +8,8 @@ from accounts.models import Block
 from .models import Course, Enrollment, Material, Feedback
 from .forms import CourseForm, MaterialForm, FeedbackForm, StatusUpdateForm
 from .tasks import notify_new_enrollment, notify_new_material, notify_new_feedback
+from accounts.notify import create_and_push  # (top of file)
+from django.urls import reverse
 
 User = get_user_model()
 
@@ -104,6 +106,7 @@ def course_detail(request, course_id):
 def enroll_in_course(request, course_id):
     if not is_student(request.user):
         return HttpResponseForbidden()
+
     course = get_object_or_404(Course, pk=course_id)
 
     if Block.objects.filter(teacher=course.instructor, blocked=request.user).exists():
@@ -112,13 +115,23 @@ def enroll_in_course(request, course_id):
 
     enrollment, created = Enrollment.objects.get_or_create(
         student=request.user,
-        course=course
+        course=course,
     )
+
     if created:
-        notify_new_enrollment.delay(enrollment.id)
+        url = reverse("course_detail", kwargs={"course_id": course.id})
+        create_and_push(
+            recipient=course.instructor,
+            verb=f"{request.user.username} enrolled in {course.title}",
+            url=url,
+            actor=request.user,
+        )
+
         messages.success(request, "Enrolled successfully.")
-    else:
-        messages.info(request, "You are already enrolled.")
+        return redirect("course_detail", course_id=course.id)
+
+    # Already enrolled
+    messages.info(request, "You are already enrolled.")
     return redirect("course_detail", course_id=course.id)
 
 @login_required
@@ -139,18 +152,38 @@ def unenroll_student(request, course_id, student_id):
 def material_upload(request, course_id):
     if not is_teacher(request.user):
         return HttpResponseForbidden()
+
     course = get_object_or_404(Course, pk=course_id, instructor=request.user)
+
     if request.method == "POST":
         form = MaterialForm(request.POST, request.FILES)
         if form.is_valid():
             material = form.save(commit=False)
             material.course = course
             material.save()
-            notify_new_material.delay(material.id)
+
+            url = reverse("course_detail", kwargs={"course_id": course.id})
+            student_ids = list(
+                Enrollment.objects
+                .filter(course=course)
+                .values_list("student_id", flat=True)
+            )
+
+            if student_ids:
+                students = User.objects.only("id", "username").filter(id__in=student_ids)
+                for student in students:
+                    create_and_push(
+                        recipient=student,
+                        verb=f"New material in {course.title}",
+                        url=url,
+                        actor=request.user,
+                    )
+
             messages.success(request, "Material uploaded.")
             return redirect("course_detail", course_id=course.id)
     else:
         form = MaterialForm()
+
     return render(request, "courses/material_form.html", {"form": form, "course": course})
 
 @login_required

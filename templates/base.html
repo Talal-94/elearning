@@ -31,6 +31,18 @@
                   Hello, <strong>{{ user.username }}</strong>
                 </a>
               </li>
+              <li class="nav-item dropdown">
+                <a class="nav-link position-relative" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  🔔
+                  <span id="notif-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">0</span>
+                </a>
+                <ul class=" nav-item dropdown-menu dropdown-menu-end" aria-labelledby="notifDropdown">
+                  <li class="dropdown-header">Notifications</li>
+                  <li><div id="notif-list" style="max-height:260px; overflow:auto;"></div></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item" href="{% url 'notifications_list' %}">View all</a></li>
+                </ul>
+              </li>
               <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Dashboard</a></li>
               <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
             {% else %}
@@ -64,5 +76,46 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_js %}{% endblock %}
+    <script>
+(function () {
+  const badge = document.getElementById('notif-badge');
+  const list = document.getElementById('notif-list');
+  if (!badge || !list) return;
+
+  function setBadge(n) {
+    badge.textContent = n;
+    badge.classList.toggle('d-none', n <= 0);
+  }
+  function prependItem(item) {
+    const a = document.createElement('a');
+    a.className = 'dropdown-item';
+    a.href = item.url || '#';
+    a.textContent = item.verb;
+    list.prepend(a);
+  }
+
+  let count = 0;
+  fetch("{% url 'notifications_unread_count' %}", {headers: {"X-Requested-With":"XMLHttpRequest"}})
+    .then(r => r.json()).then(d => { count = d.count || 0; setBadge(count); }).catch(() => {});
+
+  const scheme = (window.location.protocol === "https:") ? "wss" : "ws";
+  const wsUrl = `${scheme}://${window.location.host}/ws/notifications/`;
+  let socket;
+  try {
+    socket = new WebSocket(wsUrl);
+    socket.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      prependItem(data);
+      count = (count || 0) + (data.unread_increment ? 1 : 0);
+      setBadge(count);
+    };
+  } catch(e) {}
+
+  setInterval(() => {
+    fetch("{% url 'notifications_unread_count' %}", {headers: {"X-Requested-With":"XMLHttpRequest"}})
+      .then(r => r.json()).then(d => setBadge(d.count || 0)).catch(() => {});
+  }, 30000);
+})();
+</script>
   </body>
 </html>

@@ -2,7 +2,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
-from django.core.exceptions import ValidationError  # <-- add this
+from django.core.exceptions import ValidationError 
+from django.utils import timezone
 
 class User(AbstractUser):
     STUDENT = 'student'
@@ -36,3 +37,31 @@ class Block(models.Model):
         self.full_clean()  
         return super().save(*args, **kwargs)
 
+class Notification(models.Model):
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="actions"
+    )
+    verb = models.CharField(max_length=140)
+    url = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    @property
+    def is_read(self) -> bool:
+        return self.read_at is not None
+
+    def mark_read(self):
+        if not self.read_at:
+            self.read_at = timezone.now()
+            self.save(update_fields=["read_at"])
+
+    def __str__(self):
+        who = getattr(self.recipient, "username", "user")
+        return f"To {who}: {self.verb}"

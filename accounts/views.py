@@ -9,6 +9,11 @@ from django.shortcuts import get_object_or_404, redirect, render
 from .forms import SignUpForm
 from .models import Block
 from courses.models import Course, Enrollment, StatusUpdate
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse, HttpResponse
+from django.shortcuts import render, redirect
+from django.utils import timezone
+from .models import Notification
 
 User = get_user_model()
 
@@ -161,3 +166,21 @@ def profile_view(request, username: str):
         "enrolled_courses": enrolled_courses,
     }
     return render(request, "accounts/profile.html", context)
+
+
+@login_required
+def notifications_unread_count(request):
+    count = Notification.objects.filter(recipient=request.user, read_at__isnull=True).count()
+    return JsonResponse({"count": count})
+
+@login_required
+def notifications_list(request):
+    qs = Notification.objects.filter(recipient=request.user).select_related("actor")[:50]
+    return render(request, "accounts/notifications.html", {"notifications": qs})
+
+@login_required
+def notifications_mark_all_read(request):
+    Notification.objects.filter(recipient=request.user, read_at__isnull=True).update(read_at=timezone.now())
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({"ok": True})
+    return redirect("notifications_list")

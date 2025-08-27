@@ -7,6 +7,9 @@ from .views import (
     block_user,
     unblock_user,
     profile_view,
+    notifications_list,
+    notifications_unread_count,
+    notifications_mark_all_read
 )
 
 urlpatterns = [
@@ -21,4 +24,10 @@ urlpatterns = [
 
     # Public user profiles
     path("users/<str:username>/", profile_view, name="user_profile"),
+    
+    # Notifications
+    path("notifications/", notifications_list, name="notifications_list"),
+    path("notifications/unread-count/", notifications_unread_count, name="notifications_unread_count"),
+    path("notifications/mark-all-read/", notifications_mark_all_read, name="notifications_mark_all_read"),
+
 ]
