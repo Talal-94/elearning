@@ -7,7 +7,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from accounts.models import Block
 from .models import Course, Enrollment, Material, Feedback
 from .forms import CourseForm, MaterialForm, FeedbackForm, StatusUpdateForm
-from .tasks import notify_new_enrollment, notify_new_material, notify_new_feedback
 from accounts.notify import create_and_push  # (top of file)
 from django.urls import reverse
 
@@ -203,7 +202,6 @@ def give_feedback(request, course_id):
             fb.course = course
             fb.student = request.user
             fb.save()
-            notify_new_feedback.delay(fb.id)
             messages.success(request, "Thanks! Your feedback has been posted.")
             return redirect("course_detail", course_id=course.id)
     else:

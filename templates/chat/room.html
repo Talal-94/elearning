@@ -1,46 +1,124 @@
 {% extends "base.html" %}
 {% block title %}Chat · eLearning{% endblock %}
+
 {% block content %}
 <h1 class="h4 mb-3">
   Chat — <a href="{% url 'course_detail' course.id %}">{{ course.title }}</a>
 </h1>
 
+<style>
+  .chat-row { display: flex; align-items: center; gap: .5rem; margin-bottom: .25rem; }
+  .chat-row .chat-bubble { padding: .375rem .5rem; border-radius: .5rem; max-width: 85%; }
+  .chat-row.me { justify-content: flex-end; }                 /* your own messages to the right */
+  .chat-row.me .chat-bubble { background: #0d6efd; color: #fff; }  /* primary bubble for 'You' */
+  .chat-row:not(.me) .chat-bubble { background: #f8f9fa; }    /* light bubble for others */
+</style>
+
 <div class="card shadow-sm">
   <div class="card-body">
-    <div id="chat-log" class="border rounded p-2 mb-2" style="height: 260px; overflow:auto;"></div>
-    <div class="input-group">
-      <input id="chat-message-input" type="text" class="form-control" placeholder="Type a message…" />
-      <button id="chat-message-submit" class="btn btn-primary">Send</button>
+    <!-- Chat history -->
+    <div id="chat-log" class="border rounded p-2 mb-2" style="height: 300px; overflow:auto;">
+      {% for m in history %}
+        <div class="chat-row {% if m.user_id == current_user_id %}me{% endif %}">
+          <div class="chat-bubble">
+            <strong class="me-1">{{ m.user.username }}</strong>
+            {% if m.user_id == course.instructor_id %}
+              <span class="badge bg-primary">Instructor</span>
+            {% else %}
+              <span class="badge bg-success">Student</span>
+            {% endif %}
+            {% if m.user_id == current_user_id %}
+              <span class="badge bg-secondary ms-1">You</span>
+            {% endif %}
+            <div class="mt-1">{{ m.content }}</div>
+            <div class="text-muted small mt-1">{{ m.created_at|date:"H:i" }}</div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="text-muted">No messages yet. Say hi!</div>
+      {% endfor %}
     </div>
+
+    <!-- Composer -->
+    <form id="chat-form" class="input-group" autocomplete="off">
+      <input id="chat-message-input" type="text" class="form-control" placeholder="Type a message…" />
+      <button id="chat-message-submit" class="btn btn-primary" type="submit">Send</button>
+    </form>
   </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  const roomName = "{{ course.id }}";
-  const wsScheme = (location.protocol === "https:") ? "wss" : "ws";
-  const chatSocket = new WebSocket(wsScheme + "://" + window.location.host + "/ws/chat/" + roomName + "/");
+  (function() {
+    const CURRENT_USER_ID = parseInt('{{ current_user_id }}', 10);
+    const courseId = "{{ course.id }}";
+    const wsScheme = (location.protocol === "https:") ? "wss" : "ws";
+    const wsUrl = wsScheme + "://" + window.location.host + "/ws/chat/" + courseId + "/";
 
-  chatSocket.onopen = () => console.log("[Chat] open");
-  chatSocket.onmessage = (e) => {
-    const data = JSON.parse(e.data);
-    const log = document.getElementById("chat-log");
-    const p = document.createElement("p");
-    p.className = "mb-1";
-    p.textContent = data.user + ": " + data.message;
-    log.appendChild(p);
-    log.scrollTop = log.scrollHeight;
-  };
-  chatSocket.onerror = (e) => console.log("[Chat] error", e);
-  chatSocket.onclose = () => console.log("[Chat] closed");
+    const logEl = document.getElementById("chat-log");
+    const formEl = document.getElementById("chat-form");
+    const inputEl = document.getElementById("chat-message-input");
 
-  document.getElementById("chat-message-submit").onclick = () => {
-    const input = document.getElementById("chat-message-input");
-    if (input.value.trim().length === 0) return;
-    chatSocket.send(JSON.stringify({ "message": input.value }));
-    input.value = "";
-    input.focus();
-  };
+    function appendMessage(username, text, isInstructor, userId) {
+      const isMe = Number(userId) === CURRENT_USER_ID;
+
+      const row = document.createElement("div");
+      row.className = "chat-row" + (isMe ? " me" : "");
+
+      const bubble = document.createElement("div");
+      bubble.className = "chat-bubble";
+
+      const strong = document.createElement("strong");
+      strong.className = "me-1";
+      strong.textContent = username;
+      bubble.appendChild(strong);
+
+      const badge = document.createElement("span");
+      badge.className = "badge " + (isInstructor ? "bg-primary" : "bg-success");
+      badge.textContent = isInstructor ? "Instructor" : "Student";
+      bubble.appendChild(badge);
+
+      if (isMe) {
+        const you = document.createElement("span");
+        you.className = "badge bg-secondary ms-1";
+        you.textContent = "You";
+        bubble.appendChild(you);
+      }
+
+      const content = document.createElement("div");
+      content.className = "mt-1";
+      content.textContent = text; // safe against HTML injection
+      bubble.appendChild(content);
+
+      row.appendChild(bubble);
+      logEl.appendChild(row);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    const chatSocket = new WebSocket(wsUrl);
+
+    chatSocket.onopen = () => console.log("[Chat] open:", wsUrl);
+    chatSocket.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      appendMessage(
+        data.user,
+        data.message,
+        !!data.is_instructor,
+        data.user_id
+      );
+    };
+    chatSocket.onerror = (e) => console.log("[Chat] error", e);
+    chatSocket.onclose = () => console.log("[Chat] closed");
+
+    formEl.addEventListener("submit", function(ev) {
+      ev.preventDefault();
+      const msg = (inputEl.value || "").trim();
+      if (!msg) return;
+      chatSocket.send(JSON.stringify({ message: msg }));
+      inputEl.value = "";
+      inputEl.focus();
+    });
+  })();
 </script>
 {% endblock %}

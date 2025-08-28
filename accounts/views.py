@@ -5,8 +5,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
-
-from .forms import SignUpForm
+from .forms import SignUpForm, ProfileForm
 from .models import Block
 from courses.models import Course, Enrollment, StatusUpdate
 from django.contrib.auth.decorators import login_required
@@ -14,6 +13,7 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from .models import Notification
+from django.contrib import messages
 
 User = get_user_model()
 
@@ -184,3 +184,16 @@ def notifications_mark_all_read(request):
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return JsonResponse({"ok": True})
     return redirect("notifications_list")
+
+
+@login_required
+def edit_profile(request):
+    if request.method == "POST":
+        form = ProfileForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Profile updated.")
+            return redirect("user_profile", username=request.user.username)
+    else:
+        form = ProfileForm(instance=request.user)
+    return render(request, "accounts/edit_profile.html", {"form": form})

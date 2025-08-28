@@ -9,7 +9,8 @@ from .views import (
     profile_view,
     notifications_list,
     notifications_unread_count,
-    notifications_mark_all_read
+    notifications_mark_all_read,
+    edit_profile
 )
 
 urlpatterns = [
@@ -29,5 +30,7 @@ urlpatterns = [
     path("notifications/", notifications_list, name="notifications_list"),
     path("notifications/unread-count/", notifications_unread_count, name="notifications_unread_count"),
     path("notifications/mark-all-read/", notifications_mark_all_read, name="notifications_mark_all_read"),
+
+    path("profile/edit/", edit_profile, name="edit_profile"),
 
 ]

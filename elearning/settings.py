@@ -175,9 +175,6 @@ DEFAULT_FROM_EMAIL = 'noreply@elearning.local'
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 
-CELERY_TASK_ALWAYS_EAGER = True
-CELERY_TASK_EAGER_PROPAGATES = True
-
 
 CHANNEL_LAYERS = {
     'default': {
@@ -212,10 +209,6 @@ MEDIA_ROOT = BASE_DIR / "media"
 MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# Celery
-CELERY_TASK_ALWAYS_EAGER = DEBUG
-CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
-CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 
 # Channels
 if DEBUG:

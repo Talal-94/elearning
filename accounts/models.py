@@ -10,6 +10,13 @@ class User(AbstractUser):
     TEACHER = 'teacher'
     ROLE_CHOICES = [(STUDENT, 'Student'), (TEACHER, 'Teacher')]
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default=STUDENT)
+    bio = models.TextField(blank=True)
+    location = models.CharField(max_length=120, blank=True)
+    website_url = models.URLField(blank=True)
+    expertise = models.CharField(max_length=200, blank=True)   
+    avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
+    social_twitter = models.URLField(blank=True)
+    social_linkedin = models.URLField(blank=True)
 
     def __str__(self):
         return f"{self.username} ({self.role})"
