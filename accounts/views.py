@@ -197,3 +197,12 @@ def edit_profile(request):
     else:
         form = ProfileForm(instance=request.user)
     return render(request, "accounts/edit_profile.html", {"form": form})
+
+
+@login_required
+def notifications_recent_json(request):
+    limit = int(request.GET.get("limit", "10"))
+    qs = (request.user.notifications
+            .order_by("-created_at")
+            .values("verb", "url")[:limit])
+    return JsonResponse({"results": list(qs)})

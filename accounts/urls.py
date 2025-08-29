@@ -10,7 +10,8 @@ from .views import (
     notifications_list,
     notifications_unread_count,
     notifications_mark_all_read,
-    edit_profile
+    edit_profile,
+    notifications_recent_json
 )
 
 urlpatterns = [
@@ -32,5 +33,6 @@ urlpatterns = [
     path("notifications/mark-all-read/", notifications_mark_all_read, name="notifications_mark_all_read"),
 
     path("profile/edit/", edit_profile, name="edit_profile"),
+    path("notifications/recent-json/", notifications_recent_json, name="notifications_recent_json"),
 
 ]

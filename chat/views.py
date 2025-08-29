@@ -1,28 +1,23 @@
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
 from django.shortcuts import get_object_or_404, render
-
 from courses.models import Course
-from .models import ChatMessage
 from .permissions import can_access_course_chat
+from .models import ChatMessage
 
 
 @login_required
 def room(request, course_id: int):
     course = get_object_or_404(Course, pk=course_id)
-
-    # Access: instructor of course OR enrolled student (your helper enforces this)
     if not can_access_course_chat(request.user, course):
-        # Keep your current behavior (404) rather than 403 if you prefer
+        from django.http import Http404
         raise Http404
 
-    # Load last 50 messages (oldest → newest for display)
-    history_qs = (
-        ChatMessage.objects.filter(course=course)
+    history = (
+        ChatMessage.objects
+        .filter(course=course)
         .select_related("user")
-        .order_by("-created_at")[:50]
+        .order_by("created_at")[:200]
     )
-    history = list(history_qs)[::-1]
 
     return render(
         request,
@@ -30,6 +25,7 @@ def room(request, course_id: int):
         {
             "course": course,
             "history": history,
-            "current_user_id": request.user.id,
+            "me_id": request.user.id,                  
+            "instructor_id": course.instructor_id,       
         },
     )

@@ -18,7 +18,6 @@
 
         <div id="navbarsExample" class="collapse navbar-collapse">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            {% comment %} <li class="nav-item"><a class="nav-link" href="{% url 'course_list' %}">Courses</a></li> {% endcomment %}
             <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Dashboard</a></li>
             {% if user.is_authenticated and user.role == 'teacher' %}
               <li class="nav-item"><a class="nav-link" href="{% url 'course_create' %}">New Course</a></li>
@@ -37,9 +36,11 @@
                   🔔
                   <span id="notif-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">0</span>
                 </a>
-                <ul class=" nav-item dropdown-menu dropdown-menu-end" aria-labelledby="notifDropdown">
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notifDropdown" style="min-width: 260px;">
                   <li class="dropdown-header">Notifications</li>
-                  <li><div id="notif-list" style="max-height:260px; overflow:auto;"></div></li>
+                  <li>
+                    <ul id="notif-list" class="list-unstyled mb-0 px-2" style="max-height:260px; overflow:auto;"></ul>
+                  </li>
                   <li><hr class="dropdown-divider"></li>
                   <li><a class="dropdown-item" href="{% url 'notifications_list' %}">View all</a></li>
                 </ul>
@@ -76,46 +77,86 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_js %}{% endblock %}
-    <script>
+<script>
 (function () {
   const badge = document.getElementById('notif-badge');
-  const list = document.getElementById('notif-list');
-  if (!badge || !list) return;
+  const listEl = document.getElementById('notif-list');
+  if (!badge || !listEl) return;
 
   function setBadge(n) {
     badge.textContent = n;
-    badge.classList.toggle('d-none', n <= 0);
+    badge.classList.toggle('d-none', !n || n <= 0);
   }
-  function prependItem(item) {
+
+  function liFor(item) {
+    const li = document.createElement('li');
     const a = document.createElement('a');
-    a.className = 'dropdown-item';
+    a.className = 'dropdown-item py-2';
     a.href = item.url || '#';
-    a.textContent = item.verb;
-    list.prepend(a);
+    a.textContent = item.verb || '(notification)';
+    li.appendChild(a);
+    return li;
   }
 
-  let count = 0;
-  fetch("{% url 'notifications_unread_count' %}", {headers: {"X-Requested-With":"XMLHttpRequest"}})
-    .then(r => r.json()).then(d => { count = d.count || 0; setBadge(count); }).catch(() => {});
+  function renderList(items) {
+    listEl.innerHTML = '';
+    if (!items || !items.length) {
+      const li = document.createElement('li');
+      li.className = 'px-3 py-2 text-muted';
+      li.textContent = 'No notifications';
+      listEl.appendChild(li);
+      return;
+    }
+    items.forEach(it => listEl.appendChild(liFor(it)));
+  }
 
-  const scheme = (window.location.protocol === "https:") ? "wss" : "ws";
+  async function fetchCount() {
+    try {
+      const r = await fetch("{% url 'notifications_unread_count' %}", {headers: {"X-Requested-With":"XMLHttpRequest"}});
+      const d = await r.json();
+      setBadge(d.count || 0);
+    } catch (_) {}
+  }
+
+  async function fetchRecent() {
+    try {
+      // Add this tiny JSON endpoint below (accounts.views.notifications_recent_json)
+      const r = await fetch("{% url 'notifications_recent_json' %}?limit=10", {headers: {"X-Requested-With":"XMLHttpRequest"}});
+      const d = await r.json();
+      renderList(d.results || []);
+    } catch (_) {}
+  }
+
+  // Lazy load when the dropdown opens
+  document.getElementById('notifDropdown')
+    .addEventListener('shown.bs.dropdown', () => { fetchRecent(); });
+
+  // Initial badge and poll count every 30s as a fallback
+  fetchCount();
+  setInterval(fetchCount, 30000);
+
+  // Live updates via WS
+  const scheme = (location.protocol === "https:") ? "wss" : "ws";
   const wsUrl = `${scheme}://${window.location.host}/ws/notifications/`;
-  let socket;
   try {
-    socket = new WebSocket(wsUrl);
+    const socket = new WebSocket(wsUrl);
     socket.onmessage = (e) => {
-      const data = JSON.parse(e.data);
-      prependItem(data);
-      count = (count || 0) + (data.unread_increment ? 1 : 0);
-      setBadge(count);
+      const data = JSON.parse(e.data); // expecting {verb, url, unread_increment}
+      // Prepend to list
+      if (listEl.children.length && !listEl.firstElementChild.classList.contains('text-muted')) {
+        listEl.prepend(liFor(data));
+      } else {
+        renderList([data]); // if empty state is showing
+      }
+      // Update badge
+      const inc = (data.unread_increment ? 1 : 0);
+      const current = parseInt(badge.textContent || "0", 10) || 0;
+      setBadge(current + inc);
     };
-  } catch(e) {}
-
-  setInterval(() => {
-    fetch("{% url 'notifications_unread_count' %}", {headers: {"X-Requested-With":"XMLHttpRequest"}})
-      .then(r => r.json()).then(d => setBadge(d.count || 0)).catch(() => {});
-  }, 30000);
+  } catch (_) {}
 })();
 </script>
+
+
   </body>
 </html>
