@@ -156,61 +156,6 @@ else:
 
 
 
-
-# # AWS_ACCESS_KEY_ID = 'AKIAVOW5WIT6DRQBAJK2'
-# # AWS_SECRET_ACCESS_KEY = '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'
-# AWS_STORAGE_BUCKET_NAME = 'elearningappproject'
-# AWS_S3_SIGNATURE_VERSION = "s3v4"
-# AWS_S3_REGION_NAME = 'eu-north-1'
-# AWS_S3_FILE_OVERWRITE = False
-# AWS_DEFAULT_ACL =  None
-# AWS_S3_VERIFY = True
-# AWS_QUERYSTRING_AUTH = False
-# # DEFAULT_FILE_STORAGE = "elearning.storage_backends.MediaRootS3Boto3Storage"
-# MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/media/"
-
-
-
-
-
-
-
-# STORAGES = {
-#     "default": { 
-#         "BACKEND": "elearning.storage_backends.MediaRootS3Boto3Storage",
-#     },
-#     "staticfiles": { 
-#         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-#     },
-# }
-
-# USE_S3 = os.getenv("USE_S3", "0") == "1"
-
-# if USE_S3:
-#     # AWS_ACCESS_KEY_ID = 'AKIAVOW5WIT6DRQBAJK2'
-#     # AWS_SECRET_ACCESS_KEY = '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'
-#     AWS_STORAGE_BUCKET_NAME = 'elearningappproject'
-#     AWS_S3_SIGNATURE_VERSION = "s3v4"
-#     AWS_S3_REGION_NAME = 'eu-north-1'
-#     AWS_S3_FILE_OVERWRITE = False
-#     AWS_DEFAULT_ACL =  None
-#     AWS_S3_VERIFY = True
-#     AWS_QUERYSTRING_AUTH = False
-
-#     DEFAULT_FILE_STORAGE = "elearning.storage_backends.MediaRootS3Boto3Storage"
-#     MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/media/"
-# else:
-#     DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
-#     MEDIA_URL = "/media/"
-#     MEDIA_ROOT = BASE_DIR / "media"
-
-
-# if RUNNING_TESTS:
-#     DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
-#     MEDIA_URL = "/media/"
-#     MEDIA_ROOT = BASE_DIR / "media"
-
-
 STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
