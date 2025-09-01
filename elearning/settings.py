@@ -2,21 +2,15 @@
 import os, sys
 from pathlib import Path
 
-import os, sys
 RUNNING_TESTS = any(a == "test" or a.endswith("pytest") for a in sys.argv)
 USE_S3 = (os.getenv("USE_S3", "0") == "1") and not RUNNING_TESTS
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 SECRET_KEY = 'django-insecure-(jcw!fbq#fsw4e@ktqmkdam-+ii23&5pj_5gkni%!agc+myyxz'
 
 DEBUG = True
-
 ALLOWED_HOSTS = ['*']
 
-
-RUNNING_TESTS = any(arg == "test" or arg.endswith("pytest") for arg in sys.argv)
-USE_S3 = (os.getenv("USE_S3", "0") == "1") and not RUNNING_TESTS
 
 
 # Application definition
@@ -133,12 +127,9 @@ ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split("
 # Static / Media
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-# MEDIA_URL = "/media/"
-# MEDIA_ROOT = BASE_DIR / "media"
 
-# WhiteNoise (insert right after SecurityMiddleware)
+# WhiteNoise
 MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
-# STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 
 # Channels
@@ -151,9 +142,6 @@ else:
             "CONFIG": {"hosts": [os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")]},
         }
     }
-
-
-
 
 
 STORAGES = {

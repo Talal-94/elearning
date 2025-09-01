@@ -43,8 +43,8 @@
     border-radius: .5rem;
     background: #f1f3f5;
   }
-  #chat-log .msg.me .bubble { background: #d7efff; }         /* You */
-  #chat-log .msg.instructor .bubble { background: #fff3cd; } /* Instructor */
+  #chat-log .msg.me .bubble { background: #d7efff; }        
+  #chat-log .msg.instructor .bubble { background: #fff3cd; }
 </style>
 {% endblock %}
 
@@ -85,7 +85,6 @@
     }
 
     const time = document.createElement("span");
-    // Show HH:MM if server provided a timestamp; otherwise omit
     if (timestamp) {
       try {
         const d = new Date(timestamp);
@@ -112,7 +111,6 @@
 
   chatSocket.onmessage = (e) => {
     const data = JSON.parse(e.data);
-    // Expecting shape: {message, user:{id,username,is_instructor}, timestamp}
     appendMessage({
       user: data.user || {},
       message: data.message || "",
@@ -123,7 +121,6 @@
   chatSocket.onerror = (e) => console.log("[Chat] error", e);
   chatSocket.onclose = () => console.log("[Chat] closed");
 
-  // Send
   function sendCurrent() {
     const txt = inputEl.value.trim();
     if (!txt) return;

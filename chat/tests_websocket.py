@@ -1,4 +1,3 @@
-# chat/tests_websocket.py
 from asgiref.sync import async_to_sync
 from channels.auth import AuthMiddlewareStack
 from channels.routing import URLRouter
@@ -13,40 +12,25 @@ import chat.routing
 User = get_user_model()
 
 def ws_path_for_course(course_id: int) -> str:
-    """
-    Adjust this to match your routing.
-    Default assumes: path('ws/chat/<str:room_name>/', ...)
-    and you use room names like 'course_<id>'.
-    """
     return f"/ws/chat/{course_id}/"
 
 
 class ChatAuthTests(TransactionTestCase):
-    """
-    Uses TransactionTestCase because we run an event loop with Channels' communicator.
-    No database rollbacks inside async context issues.
-    """
-
     def setUp(self):
-        # App under test: Channels routing with auth
         self.application = AuthMiddlewareStack(URLRouter(chat.routing.websocket_urlpatterns))
 
-        # Users
         self.teacher = User.objects.create_user(username="teach", password="pw", role=User.TEACHER)
         self.student = User.objects.create_user(username="stud1", password="pw", role=User.STUDENT)
         self.other_student = User.objects.create_user(username="stud2", password="pw", role=User.STUDENT)
 
-        # Course + enrollment
         self.course = Course.objects.create(title="Web Dev", description="CM3035", instructor=self.teacher)
         Enrollment.objects.create(student=self.student, course=self.course)
 
         self.path = ws_path_for_course(self.course.id)
 
-    # ---------- helpers ----------
     def _connect_as(self, user) -> bool:
         async def _inner():
             comm = WebsocketCommunicator(self.application, self.path)
-            # Bypass session/cookies by injecting user into scope
             comm.scope["user"] = user
             connected, _ = await comm.connect()
             if connected:
@@ -54,7 +38,6 @@ class ChatAuthTests(TransactionTestCase):
             return connected
         return async_to_sync(_inner)()
 
-    # ---------- tests ----------
     def test_anonymous_is_rejected(self):
         anon = AnonymousUser()
         connected = self._connect_as(anon)

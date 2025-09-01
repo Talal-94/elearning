@@ -22,7 +22,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close()
             return
 
-        # Load course & authorise
         try:
             self.course = await sync_to_async(
                 Course.objects.select_related("instructor").get

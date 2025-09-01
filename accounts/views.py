@@ -55,7 +55,6 @@ class CustomLogoutView(LogoutView):
 # -------- Search / Block --------
 @login_required
 def user_search_view(request):
-    """Teacher directory search with initial list + pagination."""
     if not is_teacher(request.user):
         return HttpResponseForbidden()
 
@@ -87,7 +86,6 @@ def user_search_view(request):
         else:
             page_obj.object_list = list(page_obj.object_list)[: end_index - start_index]
 
-# Only consider blocked STUDENTS for the blocked_ids set
     blocked_ids = set(
         request.user.blocks_made
         .filter(blocked__role=User.STUDENT)
@@ -98,7 +96,7 @@ def user_search_view(request):
         {
             "user": u,
             "is_blocked": (u.pk in blocked_ids),
-            "can_block": is_student(u),   # <- show/hide buttons in template
+            "can_block": is_student(u)
         }
         for u in page_obj.object_list
     ]

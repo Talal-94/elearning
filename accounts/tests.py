@@ -30,12 +30,10 @@ class AccountsTests(TestCase):
         self.assertEqual(r.status_code, 302)
 
     def test_user_search_teacher_only(self):
-        # teacher can access
         self.login_teacher()
         r = self.client.get(reverse("user_search"))
         self.assertEqual(r.status_code, 200)
 
-        # student cannot
         self.client.logout()
         self.login_student()
         r = self.client.get(reverse("user_search"))
@@ -47,16 +45,13 @@ class AccountsTests(TestCase):
         self.assertEqual(r.status_code, 200)
 
     def test_block_prevents_enrollment(self):
-        # teacher has a course
         course = Course.objects.create(title="Physics", description="Basics", instructor=self.teacher)
 
-        # teacher blocks student
         Block.objects.create(teacher=self.teacher, blocked=self.student)
 
-        # student tries to enroll
         self.login_student()
         r = self.client.get(reverse("enroll", args=[course.id]), follow=True)
         self.assertEqual(r.status_code, 200)
         self.assertFalse(Enrollment.objects.filter(course=course, student=self.student).exists())
-        # (Optional) check message appeared
+
         self.assertContains(r, "blocked", status_code=200)

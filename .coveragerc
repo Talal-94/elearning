@@ -1,9 +1,0 @@
-[run]
-omit =
-    */venv/*
-    */migrations/*
-    manage.py
-
-[report]
-show_missing = True
-skip_covered = True

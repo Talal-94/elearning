@@ -12,7 +12,6 @@ from courses.models import Course, Enrollment, Feedback, Material, StatusUpdate
 
 User = get_user_model()
 
-# create a temp MEDIA_ROOT so test uploads don't pollute your project
 _TEST_MEDIA_ROOT = tempfile.mkdtemp()
 
 @override_settings(MEDIA_ROOT=_TEST_MEDIA_ROOT)
@@ -43,7 +42,6 @@ class CoursesTests(TestCase):
     def login_student(self):
         self.client.login(username="student1", password="pass")
 
-    # ----- Course creation -----
     def test_teacher_can_create_course(self):
         self.login_teacher()
         r = self.client.post(reverse("course_create"), {"title": "Math", "description": "Algebra"})
@@ -56,7 +54,6 @@ class CoursesTests(TestCase):
         r = self.client.get(reverse("course_create"))
         self.assertEqual(r.status_code, 403)
 
-    # ----- Enrollment -----
     def test_student_can_enroll(self):
         self.login_student()
         r = self.client.get(reverse("enroll", args=[self.course.id]))
@@ -77,7 +74,6 @@ class CoursesTests(TestCase):
         self.assertFalse(Enrollment.objects.filter(course=self.course, student=self.student).exists())
         self.assertContains(r, "blocked", status_code=200)
 
-    # ----- Feedback -----
     def test_feedback_requires_enrollment(self):
         self.login_student()
         r = self.client.post(reverse("give_feedback", args=[self.course.id]), {"content": "Nice class"}, follow=True)
@@ -92,7 +88,6 @@ class CoursesTests(TestCase):
         self.assertEqual(r.status_code, 302)
         self.assertTrue(Feedback.objects.filter(course=self.course, student=self.student, content="Great!").exists())
 
-    # ----- Materials -----
     def test_material_upload_teacher_only(self):
         self.login_student()
         r = self.client.get(reverse("material_upload", args=[self.course.id]))
@@ -108,16 +103,13 @@ class CoursesTests(TestCase):
         self.assertEqual(r.status_code, 302)
         self.assertTrue(Material.objects.filter(course=self.course, title="Week 1").exists())
 
-    # ----- Status updates -----
     def test_post_status_creates_update(self):
         self.login_student()
         r = self.client.post(reverse("post_status"), {"content": "Hi there"})
         self.assertEqual(r.status_code, 302)
         self.assertTrue(StatusUpdate.objects.filter(user=self.student, content="Hi there").exists())
 
-    # ----- Course detail shows materials + feedback -----
     def test_course_detail_lists_materials_and_feedback(self):
-        # prep: one material, one feedback
         Material.objects.create(course=self.course, title="Syllabus", upload=SimpleUploadedFile("syllabus.txt", b"x"))
         Enrollment.objects.create(course=self.course, student=self.student)
         Feedback.objects.create(course=self.course, student=self.student, content="Good!")

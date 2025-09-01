@@ -10,6 +10,7 @@ from .forms import CourseForm, MaterialForm, FeedbackForm, StatusUpdateForm
 from accounts.notify import create_and_push
 from django.urls import reverse
 from django.db.models.fields.files import FileField, ImageField
+from django.db import transaction
 
 User = get_user_model()
 
@@ -154,33 +155,54 @@ def material_upload(request, course_id):
         return HttpResponseForbidden()
 
     course = get_object_or_404(Course, pk=course_id, instructor=request.user)
+    User = get_user_model()
+
+    def notify_students(material):
+        url = reverse("course_detail", kwargs={"course_id": course.id})
+        student_ids = list(
+            Enrollment.objects.filter(course=course)
+            .exclude(student_id=request.user.id)
+            .values_list("student_id", flat=True)
+        )
+        if not student_ids:
+            return
+
+        for student in User.objects.only("id", "username").filter(id__in=student_ids):
+            create_and_push(
+                recipient=student,
+                verb=f"New material in {course.title}: "
+                     f"{getattr(material, 'title', '') or getattr(material, 'upload', None) or 'File'}",
+                url=url,
+                actor=request.user,
+            )
 
     if request.method == "POST":
         form = MaterialForm(request.POST, request.FILES)
         if form.is_valid():
-            m = form.save(commit=False)
-            m.course = course
-            m.save()
+            with transaction.atomic():
+                m = form.save(commit=False)
+                m.course = course
+                m.save()
+                notify_students(m)
             messages.success(request, "Material uploaded.")
             return redirect("course_detail", course_id=course.id)
 
-        # --- Fallback: accept any posted file field name (helps unit tests) ---
         upload = next(iter(request.FILES.values()), None)
         if upload:
-            m = Material(course=course)
-            # set title from POST or filename if your model has a title field
-            if hasattr(m, "title"):
-                m.title = request.POST.get("title") or getattr(upload, "name", "")
-            # detect the actual file field on the model
-            file_fields = [
-                f.name for f in Material._meta.get_fields()
-                if isinstance(f, (FileField, ImageField))
-            ]
-            if file_fields:
-                setattr(m, file_fields[0], upload)
-                m.save()
-                messages.success(request, "Material uploaded.")
-                return redirect("course_detail", course_id=course.id)
+            with transaction.atomic():
+                m = Material(course=course)
+                if hasattr(m, "title"):
+                    m.title = request.POST.get("title") or getattr(upload, "name", "")
+                file_fields = [
+                    f.name for f in Material._meta.get_fields()
+                    if isinstance(f, (FileField, ImageField))
+                ]
+                if file_fields:
+                    setattr(m, file_fields[0], upload)
+                    m.save()
+                    notify_students(m)
+                    messages.success(request, "Material uploaded.")
+                    return redirect("course_detail", course_id=course.id)
 
         messages.error(request, "Upload failed. Please check the form and try again.")
         return render(request, "courses/material_form.html", {"form": form, "course": course})

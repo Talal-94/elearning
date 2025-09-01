@@ -25,7 +25,7 @@ def room(request, course_id: int):
         {
             "course": course,
             "history": history,
-            "me_id": request.user.id,                  
-            "instructor_id": course.instructor_id,       
+            "me_id": request.user.id,                   
+            "instructor_id": course.instructor_id,      
         },
     )

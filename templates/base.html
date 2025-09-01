@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <title>{% block title %}eLearning{% endblock %}</title>
-    <!-- Bootstrap 5 -->
+    {% comment %} Bootstrap 5  {% endcomment %}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   </head>
   <body class="bg-light">
@@ -127,28 +127,24 @@
     } catch (_) {}
   }
 
-  // Lazy load when the dropdown opens
   document.getElementById('notifDropdown')
     .addEventListener('shown.bs.dropdown', () => { fetchRecent(); });
 
-  // Initial badge and poll count every 30s as a fallback
   fetchCount();
   setInterval(fetchCount, 30000);
 
-  // Live updates via WS
   const scheme = (location.protocol === "https:") ? "wss" : "ws";
   const wsUrl = `${scheme}://${window.location.host}/ws/notifications/`;
   try {
     const socket = new WebSocket(wsUrl);
     socket.onmessage = (e) => {
-      const data = JSON.parse(e.data); // expecting {verb, url, unread_increment}
-      // Prepend to list
+      const data = JSON.parse(e.data); 
       if (listEl.children.length && !listEl.firstElementChild.classList.contains('text-muted')) {
         listEl.prepend(liFor(data));
       } else {
-        renderList([data]); // if empty state is showing
+        renderList([data]); 
       }
-      // Update badge
+
       const inc = (data.unread_increment ? 1 : 0);
       const current = parseInt(badge.textContent || "0", 10) || 0;
       setBadge(current + inc);

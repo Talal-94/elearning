@@ -21,6 +21,7 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.username} ({self.role})"
 
+
 class Block(models.Model):
     teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='blocks_made')
     blocked = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='blocked_by')
@@ -43,6 +44,7 @@ class Block(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()  
         return super().save(*args, **kwargs)
+
 
 class Notification(models.Model):
     recipient = models.ForeignKey(

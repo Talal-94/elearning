@@ -2,7 +2,6 @@ import os
 from django import forms
 from .models import Course, Feedback, Material, StatusUpdate
 
-
 class CourseForm(forms.ModelForm):
     class Meta:
         model = Course
@@ -20,9 +19,9 @@ class MaterialForm(forms.ModelForm):
         if not f:
             return f
 
-        # Allowed extensions & size cap (10 MB)
+        # Allowed extensions & size cap 10 MB
         allowed_exts = {".pdf", ".doc", ".docx", ".ppt", ".pptx", ".zip"}
-        max_size = 10 * 1024 * 1024  # 10 MB
+        max_size = 10 * 1024 * 1024 
 
         ext = os.path.splitext(f.name)[1].lower()
         if ext not in allowed_exts:

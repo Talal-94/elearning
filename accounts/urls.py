@@ -15,6 +15,7 @@ from .views import (
 )
 
 urlpatterns = [
+    # Auth
     path("signup/", signup_view, name="signup"),
     path("login/", CustomLoginView.as_view(), name="login"),
     path("logout/", logout_view, name="logout"),
@@ -24,15 +25,13 @@ urlpatterns = [
     path("users/<int:user_id>/block/", block_user, name="user_block"),
     path("users/<int:user_id>/unblock/", unblock_user, name="user_unblock"),
 
-    # Public user profiles
+    # User profiles
     path("users/<str:username>/", profile_view, name="user_profile"),
+    path("profile/edit/", edit_profile, name="edit_profile"),
     
     # Notifications
     path("notifications/", notifications_list, name="notifications_list"),
     path("notifications/unread-count/", notifications_unread_count, name="notifications_unread_count"),
     path("notifications/mark-all-read/", notifications_mark_all_read, name="notifications_mark_all_read"),
-
-    path("profile/edit/", edit_profile, name="edit_profile"),
     path("notifications/recent-json/", notifications_recent_json, name="notifications_recent_json"),
-
 ]

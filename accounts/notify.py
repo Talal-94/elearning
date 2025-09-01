@@ -1,6 +1,5 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.urls import reverse
 from .models import Notification
 
 def create_and_push(recipient, verb: str, url: str = "", actor=None):

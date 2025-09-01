@@ -2,11 +2,9 @@
 {% block title %}{{ profile_user.username }} · Profile{% endblock %}
 {% block content %}
 <div class="row g-4">
-  <!-- Left column: identity & profile meta -->
   <div class="col-md-4">
     <div class="card shadow-sm h-100">
       <div class="card-body">
-        <!-- Avatar -->
         <div class="d-flex align-items-center mb-3">
           {% if profile_user.avatar %}
             <img src="{{ profile_user.avatar.url }}" alt="{{ profile_user.username }} avatar"
@@ -23,7 +21,6 @@
           </div>
         </div>
 
-        <!-- Name -->
         {% if profile_user.first_name or profile_user.last_name %}
           <div class="mb-2">
             <strong>Name:</strong>
@@ -31,22 +28,18 @@
           </div>
         {% endif %}
 
-        <!-- Expertise (useful for teachers) -->
         {% if profile_user.expertise %}
           <div class="mb-2"><strong>Expertise:</strong> {{ profile_user.expertise }}</div>
         {% endif %}
 
-        <!-- Location -->
         {% if profile_user.location %}
           <div class="mb-2"><strong>Location:</strong> {{ profile_user.location }}</div>
         {% endif %}
 
-        <!-- Email (optional) -->
         {% if profile_user.email %}
           <div class="mb-2"><strong>Email:</strong> {{ profile_user.email }}</div>
         {% endif %}
 
-        <!-- Website / Socials -->
         <ul class="list-unstyled mb-3">
           {% if profile_user.website_url %}
             <li>🌐 <a href="{{ profile_user.website_url }}" target="_blank" rel="noopener">Website</a></li>
@@ -59,7 +52,6 @@
           {% endif %}
         </ul>
 
-        <!-- Bio -->
         {% if profile_user.bio %}
           <div class="mb-3">
             <strong>About:</strong>
@@ -67,7 +59,6 @@
           </div>
         {% endif %}
 
-        <!-- Edit button for owner -->
         {% if request.user.is_authenticated and request.user.pk == profile_user.pk %}
           <a class="btn btn-sm btn-outline-secondary" href="{% url 'edit_profile' %}">Edit profile</a>
         {% endif %}
@@ -75,9 +66,7 @@
     </div>
   </div>
 
-  <!-- Right column: activity & courses -->
   <div class="col-md-8">
-    <!-- Recent status updates -->
     <div class="card shadow-sm mb-4">
       <div class="card-body">
         <h2 class="h6">Recent status updates</h2>
@@ -94,7 +83,6 @@
       </div>
     </div>
 
-    <!-- Courses taught / enrolled -->
     {% if taught_courses %}
       <div class="card shadow-sm">
         <div class="card-body">

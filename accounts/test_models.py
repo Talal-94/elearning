@@ -8,7 +8,6 @@ class AccountsModelStrTests(TestCase):
     def test_user_str(self):
         u = User.objects.create_user(username="alice", email="a@example.com", password="x", role=User.STUDENT)
         s = str(u)
-        # Don’t overfit the exact string; just ensure it’s meaningful
         self.assertTrue("alice" in s or "a@example.com" in s)
 
     def test_block_str(self):

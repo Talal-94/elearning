@@ -42,7 +42,6 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        # Students enroll themselves only
         serializer.save(student=self.request.user)
 
     def get_queryset(self):
